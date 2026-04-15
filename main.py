@@ -1,11 +1,79 @@
 import json
 from fastapi import FastAPI, Form
 from fastapi.responses import Response
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+import sqlite3
+
+conn = sqlite3.connect("chat.db", check_same_thread=False)
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user TEXT,
+    symptoms TEXT,
+    result TEXT
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS usage (
+    user TEXT,
+    count INTEGER
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS gpt_logs (
+    user TEXT,
+    query TEXT,
+    response TEXT
+)
+""")
+
+conn.commit()
+
+load_dotenv()
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def ask_gpt(msg):
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are a helpful medical assistant.
+
+Give response in this format:
+- Possible Condition
+- Medicine (OTC)
+- Food Advice
+- Short Explanation
+
+Keep it simple and safe."""
+                },
+                {"role": "user", "content": msg}
+            ],
+            max_tokens=150,  # 💰 control cost
+            temperature=0.5
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return "❗ AI service temporarily unavailable"
 
 app = FastAPI()
-user_state = {}
 
-# 📂 LOAD JSON FILES
+# 🧠 MEMORY
+user_state = {}
+user_symptoms = {}
+
+# 📂 LOAD JSON
 with open("human_diseases.json") as f:
     human_db = json.load(f)
 
@@ -15,286 +83,178 @@ with open("agri_diseases.json") as f:
 with open("animal_diseases.json") as f:
     animal_db = json.load(f)
 
-# 🌐 LANGUAGE DETECTION
+# 🌐 LANGUAGE
 def detect_language(msg):
-    hindi_words = ["bukhar","dard","pet","khansi","ulti","kya","kaise","dast"]
+    hindi_words = ["bukhar","dard","pet","khansi","ulti"]
     return "hindi" if any(w in msg for w in hindi_words) else "english"
 
-# 📋 MAIN MENU
+# 🚨 EMERGENCY
+def check_emergency(msg):
+    danger = ["chest pain","breathing","unconscious","severe"]
+    return any(d in msg for d in danger)
+
+# 📋 MENU
 def main_menu(lang="english"):
-    if lang == "hindi":
-        return """👋 स्वागत है Smart Assistant में
-
-1️⃣ मानव स्वास्थ्य
-2️⃣ कृषि 🌾
-3️⃣ पशु स्वास्थ्य 🐄
-
-👉 या सीधे अपनी समस्या लिखें
-"""
     return """👋 Smart Assistant
 
-1️⃣ Human Health
+1️⃣ Human Health 🧑‍⚕️
 2️⃣ Agriculture 🌾
 3️⃣ Animal Health 🐄
 
 👉 Or type your problem directly
 """
 
-# 👤 HUMAN MENU
-def human_disease_menu(lang="english"):
-    if lang == "hindi":
-        return """👤 बीमारी चुनें:
-
-1️⃣ बुखार
-2️⃣ सर्दी
-3️⃣ सिर दर्द
-4️⃣ पेट दर्द
-5️⃣ डायबिटीज
-6️⃣ ब्लड प्रेशर
-7️⃣ खुद लिखें
-"""
-    return """👤 Select Disease:
-
-1️⃣ Fever
-2️⃣ Cold
-3️⃣ Headache
-4️⃣ Stomach Pain
-5️⃣ Diabetes
-6️⃣ High BP
-7️⃣ Custom
-"""
-
-# 🌾 AGRI MENU
-def agri_menu(lang="english"):
-    if lang == "hindi":
-        return """🌾 समस्या चुनें:
-
-1️⃣ पत्ते पीले
-2️⃣ पत्तों पर धब्बे
-3️⃣ कीट हमला
-4️⃣ धीमी वृद्धि
-5️⃣ खुद लिखें
-"""
-    return """🌾 Select Issue:
-
-1️⃣ Yellow Leaves
-2️⃣ Leaf Spots
-3️⃣ Pest Attack
-4️⃣ Slow Growth
-5️⃣ Custom
-"""
-
-# 🐄 ANIMAL MENU
-def animal_menu(lang="english"):
-    if lang == "hindi":
-        return """🐄 समस्या चुनें:
-
-1️⃣ बुखार
-2️⃣ खाना नहीं खा रहा
-3️⃣ कमजोरी
-4️⃣ संक्रमण
-5️⃣ खुद लिखें
-"""
-    return """🐄 Select Issue:
-
-1️⃣ Fever
-2️⃣ Not Eating
-3️⃣ Weakness
-4️⃣ Infection
-5️⃣ Custom
-"""
-
-# 🧠 MATCH FUNCTION
+# 🧠 MULTI-SYMPTOM MATCH
 def match_disease(msg, db):
-    msg = msg.lower()
+    words = msg.lower().split()
+
     best_match = None
     max_score = 0
 
     for disease in db.values():
-        score = sum(1 for k in disease["keywords"] if k in msg)
+        score = sum(1 for k in disease["keywords"] if any(k in w for w in words))
+
         if score > max_score:
             max_score = score
             best_match = disease
 
-    return best_match
+    return best_match, max_score
 
-# 📦 FORMAT FUNCTIONS
-def format_human(d, lang):
-    if lang == "hindi":
-        return f"""
-🩺 बीमारी: {d['disease']}
+# 🧾 HUMAN RESPONSE (PARAGRAPH)
+def format_human(d, confidence):
 
-📌 कारण: संक्रमण या मौसम बदलने से
-
-💊 दवा: {d['medicine']}
-🥗 क्या खाएं: {d['food']}
-🚫 क्या न खाएं: {d['avoid']}
-⚠️ सावधानी: {d['precaution']}
-
-👉 2-3 दिन में ठीक न हो तो डॉक्टर दिखाएं
-"""
     return f"""
-🩺 Disease: {d['disease']}
+🩺 Based on your symptoms, you may have *{d['disease']}*
 
-📌 Reason: Infection or weather change
+📊 Confidence: {confidence}%
+
+This usually happens due to infection, weather change, or body weakness.
 
 💊 Medicine: {d['medicine']}
+
 🥗 Eat: {d['food']}
 🚫 Avoid: {d['avoid']}
-⚠️ Precaution: {d['precaution']}
 
-👉 Visit doctor if not improved
+⚠️ Care Tips:
+{d['precaution']}
+
+⏳ Recovery time: 2–5 days
+
+🚨 If symptoms worsen, consult doctor immediately
+
+👉 Type 'menu' to restart
 """
 
+# 🌾 AGRI
 def format_agri(d):
     return f"""
-🌾 Disease: {d['disease']}
+🌾 Your crop may have *{d['disease']}*
+
+📌 Cause: Environmental or fungal issue
 
 🧪 Solution: {d['solution']}
 🚫 Avoid: {d['avoid']}
-⚠️ Precaution: {d['precaution']}
+⚠️ Care: {d['precaution']}
+
+👉 Type 'menu'
 """
 
+# 🐄 ANIMAL
 def format_animal(d):
     return f"""
-🐄 Disease: {d['disease']}
+🐄 Your animal may have *{d['disease']}*
 
 💊 Treatment: {d['treatment']}
-🥗 Food: {d['food']}
-⚠️ Precaution: {d['precaution']}
+🥗 Feed: {d['food']}
+⚠️ Care: {d['precaution']}
+
+👉 Type 'menu'
 """
 
-# 🚀 MAIN ENDPOINT
+@app.get("/")
+def home():
+    return {"status": "running"}
+
+# 🚀 MAIN
 @app.post("/whatsapp")
 async def whatsapp_bot(Body: str = Form(...), From: str = Form(...)):
 
     msg = Body.lower().strip()
     uid = From
     state = user_state.get(uid, "start")
-    lang = detect_language(msg)
+
+    # 🚨 emergency
+    if check_emergency(msg):
+        return Response(
+            content="<Response><Message>🚨 Please visit hospital immediately</Message></Response>",
+            media_type="application/xml"
+        )
 
     # 🟢 START
     if msg in ["hi","hello","start","menu"]:
         user_state[uid] = "start"
-        reply = main_menu(lang)
+        user_symptoms[uid] = []
+        reply = main_menu()
 
-    # ❗ INVALID INPUT
-    elif state == "start" and msg not in ["1","2","3"]:
-        reply = (
-            "❗ Please type 'hi' or choose 1,2,3"
-            if lang=="english"
-            else "❗ कृपया 'hi' लिखें या 1,2,3 चुनें"
-        )
-
-    # 🟢 MAIN STATE
+    # 🟢 MAIN
     elif state == "start":
 
         if msg == "1":
-            user_state[uid] = "human_menu"
-            reply = human_disease_menu(lang)
+            user_state[uid] = "human"
+            user_symptoms[uid] = []
+            reply = "🧑‍⚕️ Tell your symptoms (you can write multiple like: fever headache body pain)"
 
         elif msg == "2":
-            user_state[uid] = "agri_menu"
-            reply = agri_menu(lang)
+            user_state[uid] = "agri"
+            reply = "🌾 Describe crop problem"
 
         elif msg == "3":
-            user_state[uid] = "animal_menu"
-            reply = animal_menu(lang)
-
-    # 👤 HUMAN MENU
-    elif state == "human_menu":
-
-        mapping = {
-            "1": "fever",
-            "2": "cold",
-            "3": "headache",
-            "4": "stomach",
-            "5": "diabetes",
-            "6": "bp"
-        }
-
-        if msg in mapping:
-            result = human_db.get(mapping[msg])
-            reply = format_human(result, lang) if result else "❗ Data not found"
-            user_state[uid] = "start"
-            reply += "\n\n👉 menu"
-
-        elif msg == "7":
-            user_state[uid] = "human"
-            reply = "✍️ Type symptoms" if lang=="english" else "✍️ लक्षण लिखें"
-
-        else:
-            reply = "❗ Select 1-7" if lang=="english" else "❗ 1-7 चुनें"
-
-    # 🌾 AGRI MENU
-    elif state == "agri_menu":
-
-        mapping = {
-            "1": "yellow_leaves",
-            "2": "leaf_spot",
-            "3": "pest_attack",
-            "4": "growth"
-        }
-
-        if msg in mapping:
-            result = agri_db.get(mapping[msg])
-            reply = format_agri(result) if result else "❗ Data not found"
-            user_state[uid] = "start"
-            reply += "\n\n👉 menu"
-
-        elif msg == "5":
-            user_state[uid] = "agri"
-            reply = "✍️ Describe problem"
-
-        else:
-            reply = "❗ Select 1-5"
-
-    # 🐄 ANIMAL MENU
-    elif state == "animal_menu":
-
-        mapping = {
-            "1": "animal_fever",
-            "2": "digestive_issue",
-            "3": "weakness",
-            "4": "infection"
-        }
-
-        if msg in mapping:
-            result = animal_db.get(mapping[msg])
-            reply = format_animal(result) if result else "❗ Data not found"
-            user_state[uid] = "start"
-            reply += "\n\n👉 menu"
-
-        elif msg == "5":
             user_state[uid] = "animal"
-            reply = "✍️ Describe problem"
+            reply = "🐄 Describe animal issue"
 
         else:
-            reply = "❗ Select 1-5"
+            reply = "❗ Please choose 1,2,3 or type 'menu'"
 
-    # 👤 HUMAN INPUT
+    # 👤 HUMAN FLOW (CONVERSATION)
     elif state == "human":
-        result = match_disease(msg, human_db)
-        reply = format_human(result, lang) if result else "❗ Try simple symptoms"
-        user_state[uid] = "start"
-        reply += "\n\n👉 menu"
 
-    # 🌾 AGRI INPUT
+        user_symptoms.setdefault(uid, [])
+        user_symptoms[uid].append(msg)
+
+        # ask more
+        if len(user_symptoms[uid]) < 2:
+            reply = "🤔 Any other symptoms? (or type 'no')"
+
+        elif msg == "no":
+            combined = " ".join(user_symptoms[uid])
+
+            result, score = match_disease(combined, human_db)
+
+            if result:
+                confidence = min(100, score * 30)
+                reply = format_human(result, confidence)
+            else:
+                reply = "❗ Could not detect properly"
+
+            user_state[uid] = "start"
+
+        else:
+            reply = "🤔 Add more symptoms or type 'no'"
+
+    # 🌾 AGRI
     elif state == "agri":
-        result = match_disease(msg, agri_db)
+        result, _ = match_disease(msg, agri_db)
         reply = format_agri(result) if result else "❗ Not detected"
         user_state[uid] = "start"
-        reply += "\n\n👉 menu"
 
-    # 🐄 ANIMAL INPUT
+    # 🐄 ANIMAL
     elif state == "animal":
-        result = match_disease(msg, animal_db)
+        result, _ = match_disease(msg, animal_db)
         reply = format_animal(result) if result else "❗ Not detected"
         user_state[uid] = "start"
-        reply += "\n\n👉 menu"
 
     else:
-        reply = main_menu(lang)
+        reply = main_menu()
 
     return Response(
         content=f"<Response><Message>{reply}</Message></Response>",

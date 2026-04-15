@@ -1,0 +1,12 @@
+# Environment
+.env
+
+# Database
+chat.db
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual env
+venv/
