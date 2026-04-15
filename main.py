@@ -1,6 +1,6 @@
 import json
 from fastapi import FastAPI, Form
-from fastapi.responses import Response
+from fastapi.responses import PlainTextResponse
 import sqlite3
 
 app = FastAPI()
@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS history (
     result TEXT
 )
 """)
-
 conn.commit()
 
 # 🧠 MEMORY
@@ -58,7 +57,6 @@ def match_disease(msg, db):
 
     for disease in db.values():
         score = sum(1 for k in disease["keywords"] if any(k in w for w in words))
-
         if score > max_score:
             max_score = score
             best_match = disease
@@ -67,8 +65,7 @@ def match_disease(msg, db):
 
 # 🧾 HUMAN RESPONSE
 def format_human(d, confidence):
-    return f"""
-🩺 Based on your symptoms, you may have *{d['disease']}*
+    return f"""🩺 Based on your symptoms, you may have *{d['disease']}*
 
 📊 Confidence: {confidence}%
 
@@ -81,32 +78,27 @@ def format_human(d, confidence):
 
 ⏳ Recovery: 2–5 days
 
-👉 Type 'menu' to restart
-"""
+👉 Type 'menu' to restart"""
 
 # 🌾 AGRI
 def format_agri(d):
-    return f"""
-🌾 Disease: {d['disease']}
+    return f"""🌾 Disease: {d['disease']}
 
 🧪 Solution: {d['solution']}
 🚫 Avoid: {d['avoid']}
 ⚠️ Care: {d['precaution']}
 
-👉 menu
-"""
+👉 menu"""
 
 # 🐄 ANIMAL
 def format_animal(d):
-    return f"""
-🐄 Disease: {d['disease']}
+    return f"""🐄 Disease: {d['disease']}
 
 💊 Treatment: {d['treatment']}
 🥗 Food: {d['food']}
 ⚠️ Care: {d['precaution']}
 
-👉 menu
-"""
+👉 menu"""
 
 @app.get("/")
 def home():
@@ -115,15 +107,17 @@ def home():
 # 🚀 MAIN
 @app.post("/whatsapp")
 async def whatsapp_bot(Body: str = Form(...), From: str = Form(...)):
+    
+    print("🔥 MESSAGE RECEIVED:", Body)
 
     msg = Body.lower().strip()
     uid = From
     state = user_state.get(uid, "start")
 
-    # 🚨 emergency
+    # 🚨 EMERGENCY
     if check_emergency(msg):
-        return Response(
-            content="<Response><Message>🚨 Please visit hospital immediately</Message></Response>",
+        return PlainTextResponse(
+            content="""<?xml version="1.0" encoding="UTF-8"?><Response><Message>🚨 Please visit hospital immediately</Message></Response>""",
             media_type="application/xml"
         )
 
@@ -200,7 +194,8 @@ async def whatsapp_bot(Body: str = Form(...), From: str = Form(...)):
     else:
         reply = main_menu()
 
-    return Response(
-        content=f"<Response><Message>{reply}</Message></Response>",
+    # ✅ FINAL TWILIO RESPONSE (FIXED)
+    return PlainTextResponse(
+        content=f"""<?xml version="1.0" encoding="UTF-8"?><Response><Message>{reply}</Message></Response>""",
         media_type="application/xml"
     )
