@@ -1,0 +1,162 @@
+{
+  "fever": {
+    "keywords": ["fever", "bukhar", "chills", "temperature"],
+    "disease": "Viral Fever",
+    "medicine": "Paracetamol",
+    "food": "Soup, coconut water",
+    "avoid": "Cold drinks",
+    "precaution": "Rest, hydration"
+  },
+  "cold": {
+    "keywords": ["cold", "cough", "khansi", "sneeze"],
+    "disease": "Common Cold",
+    "medicine": "Cetirizine",
+    "food": "Ginger tea",
+    "avoid": "Ice cream",
+    "precaution": "Keep warm"
+  },
+  "diarrhea": {
+    "keywords": ["diarrhea", "dast", "loose motion"],
+    "disease": "Diarrhea",
+    "medicine": "ORS",
+    "food": "Banana, curd",
+    "avoid": "Spicy food",
+    "precaution": "Drink fluids"
+  },
+  "acidity": {
+    "keywords": ["acidity", "heartburn"],
+    "disease": "Acid Reflux",
+    "medicine": "Antacids",
+    "food": "Oatmeal",
+    "avoid": "Oily food",
+    "precaution": "Avoid late meals"
+  },
+  "headache": {
+    "keywords": ["headache", "sir dard", "migraine"],
+    "disease": "Headache",
+    "medicine": "Paracetamol",
+    "food": "Hydration",
+    "avoid": "Screen time",
+    "precaution": "Rest in quiet place"
+  },
+  "migraine": {
+    "keywords": ["migraine", "severe headache"],
+    "disease": "Migraine",
+    "medicine": "Pain reliever",
+    "food": "Magnesium-rich foods",
+    "avoid": "Bright light",
+    "precaution": "Rest in dark room"
+  },
+  "asthma": {
+    "keywords": ["asthma", "breathing problem"],
+    "disease": "Asthma",
+    "medicine": "Inhaler",
+    "food": "Warm fluids",
+    "avoid": "Dust, smoke",
+    "precaution": "Avoid allergens"
+  },
+  "diabetes": {
+    "keywords": ["diabetes", "sugar"],
+    "disease": "Diabetes",
+    "medicine": "Insulin",
+    "food": "Low sugar diet",
+    "avoid": "Sugary foods",
+    "precaution": "Monitor sugar levels"
+  },
+  "bp": {
+    "keywords": ["bp", "high blood pressure"],
+    "disease": "High BP",
+    "medicine": "BP tablets",
+    "food": "Low salt diet",
+    "avoid": "Salt",
+    "precaution": "Exercise regularly"
+  },
+  "constipation": {
+    "keywords": ["constipation"],
+    "disease": "Constipation",
+    "medicine": "Laxative",
+    "food": "Fiber foods",
+    "avoid": "Junk food",
+    "precaution": "Drink water"
+  },
+  "food_poisoning": {
+    "keywords": ["food poisoning"],
+    "disease": "Food Poisoning",
+    "medicine": "ORS",
+    "food": "Light food",
+    "avoid": "Street food",
+    "precaution": "Eat clean food"
+  },
+  "allergy": {
+    "keywords": ["allergy", "itching", "rash"],
+    "disease": "Allergy",
+    "medicine": "Antihistamine",
+    "food": "Light diet",
+    "avoid": "Allergens",
+    "precaution": "Keep environment clean"
+  },
+  "skin_infection": {
+    "keywords": ["rash", "itch", "skin red"],
+    "disease": "Skin Infection",
+    "medicine": "Antifungal cream",
+    "food": "Healthy diet",
+    "avoid": "Dirty environment",
+    "precaution": "Keep skin clean"
+  },
+  "eye_infection": {
+    "keywords": ["eye red", "eye pain"],
+    "disease": "Eye Infection",
+    "medicine": "Eye drops",
+    "food": "Vitamin A",
+    "avoid": "Dust",
+    "precaution": "Wash eyes"
+  },
+  "ear_pain": {
+    "keywords": ["ear pain"],
+    "disease": "Ear Infection",
+    "medicine": "Ear drops",
+    "food": "Light diet",
+    "avoid": "Cold water",
+    "precaution": "Keep ear dry"
+  },
+  "tooth_pain": {
+    "keywords": ["tooth pain"],
+    "disease": "Tooth Pain",
+    "medicine": "Painkiller",
+    "food": "Soft food",
+    "avoid": "Cold drinks",
+    "precaution": "Brush regularly"
+  },
+  "back_pain": {
+    "keywords": ["back pain"],
+    "disease": "Back Pain",
+    "medicine": "Pain relief gel",
+    "food": "Healthy diet",
+    "avoid": "Heavy lifting",
+    "precaution": "Exercise"
+  },
+  "dengue": {
+    "keywords": ["dengue", "platelets"],
+    "disease": "Dengue",
+    "medicine": "Paracetamol",
+    "food": "Papaya leaf juice",
+    "avoid": "Mosquito exposure",
+    "precaution": "Use mosquito nets"
+  },
+  "malaria": {
+    "keywords": ["malaria"],
+    "disease": "Malaria",
+    "medicine": "Antimalarial drugs",
+    "food": "Light food",
+    "avoid": "Mosquito bites",
+    "precaution": "Use nets"
+  },
+  "typhoid": {
+    "keywords": ["typhoid"],
+    "disease": "Typhoid",
+    "medicine": "Antibiotics",
+    "food": "Boiled food",
+    "avoid": "Street food",
+    "precaution": "Clean water"
+  }
+}

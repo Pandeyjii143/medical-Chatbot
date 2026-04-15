@@ -1,0 +1,30 @@
+{
+  "animal_fever": {
+    "keywords": ["fever"],
+    "disease": "Animal Fever",
+    "treatment": "Vet consult",
+    "food": "Green fodder",
+    "precaution": "Keep warm"
+  },
+  "digestive_issue": {
+    "keywords": ["not eating"],
+    "disease": "Digestive Disorder",
+    "treatment": "Minerals",
+    "food": "Soft feed",
+    "precaution": "Clean water"
+  },
+  "infection": {
+    "keywords": ["infection"],
+    "disease": "Bacterial Infection",
+    "treatment": "Antibiotics",
+    "food": "Balanced diet",
+    "precaution": "Clean shelter"
+  },
+  "weakness": {
+    "keywords": ["weak"],
+    "disease": "Weakness",
+    "treatment": "Vitamins",
+    "food": "Nutritious feed",
+    "precaution": "Regular feeding"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "leaf_spot": {
+    "keywords": ["spots", "fungus"],
+    "disease": "Leaf Spot",
+    "solution": "Fungicide spray",
+    "avoid": "Overwatering",
+    "precaution": "Good drainage"
+  },
+  "yellow_leaves": {
+    "keywords": ["yellow leaf"],
+    "disease": "Nitrogen Deficiency",
+    "solution": "Use fertilizer",
+    "avoid": "Poor soil",
+    "precaution": "Soil testing"
+  },
+  "pest_attack": {
+    "keywords": ["pest", "insect"],
+    "disease": "Pest Attack",
+    "solution": "Neem oil",
+    "avoid": "Over chemicals",
+    "precaution": "Regular monitoring"
+  },
+  "rust": {
+    "keywords": ["rust"],
+    "disease": "Rust Disease",
+    "solution": "Fungicide",
+    "avoid": "Wet leaves",
+    "precaution": "Air circulation"
+  },
+  "blight": {
+    "keywords": ["blight"],
+    "disease": "Blight",
+    "solution": "Copper spray",
+    "avoid": "Water logging",
+    "precaution": "Crop rotation"
+  }
+}
